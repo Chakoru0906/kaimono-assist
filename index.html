@@ -1,0 +1,921 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kaimono Assist</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #f4f6f8;
+  color: #333;
+}
+
+header {
+  background: #477b72;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 23px;
+}
+
+header p {
+  margin: 6px 0 0;
+  font-size: 12px;
+}
+
+nav {
+  display: flex;
+  background: white;
+  border-bottom: 1px solid #ddd;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+nav button {
+  flex: 1;
+  border: none;
+  background: white;
+  padding: 15px 4px;
+  font-size: 13px;
+  color: #666;
+}
+
+nav button.active {
+  color: #477b72;
+  border-bottom: 3px solid #477b72;
+  font-weight: bold;
+}
+
+main {
+  max-width: 650px;
+  margin: auto;
+  padding: 16px;
+  padding-bottom: 50px;
+}
+
+h2 {
+  font-size: 19px;
+  margin-top: 12px;
+}
+
+h3 {
+  font-size: 15px;
+}
+
+.panel {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 6px #00000008;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin: 6px 0 12px;
+  font-size: 16px;
+  background: white;
+}
+
+button {
+  cursor: pointer;
+}
+
+.primary {
+  width: 100%;
+  background: #477b72;
+  color: white;
+  border: none;
+  padding: 13px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.secondary {
+  background: #edf3f1;
+  color: #477b72;
+  border: none;
+  border-radius: 7px;
+  padding: 9px 12px;
+}
+
+.danger {
+  background: #fff0f0;
+  color: #c44;
+  border: none;
+  border-radius: 7px;
+  padding: 8px 10px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 4px;
+  border-bottom: 1px solid #eee;
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name {
+  font-weight: bold;
+  overflow-wrap: anywhere;
+}
+
+.item-detail {
+  color: #888;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.item.bought .item-name {
+  text-decoration: line-through;
+  color: #aaa;
+}
+
+.priority {
+  font-size: 11px;
+  padding: 4px 7px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.high { background: #ffe5e5; color: #c44; }
+.medium { background: #fff1d6; color: #a76b00; }
+.low { background: #e8f0ff; color: #5275ae; }
+
+.quick-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-list button {
+  background: #edf3f1;
+  color: #477b72;
+  border: 1px solid #dce9e5;
+  padding: 9px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+}
+
+.empty {
+  text-align: center;
+  color: #999;
+  padding: 25px 5px;
+  font-size: 14px;
+}
+
+.small {
+  font-size: 12px;
+  color: #888;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.row > input {
+  flex: 1;
+  min-width: 0;
+}
+
+.row button {
+  white-space: nowrap;
+}
+
+.hidden {
+  display: none;
+}
+
+.store-item, .product-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.store-item span, .product-item span {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+footer {
+  text-align: center;
+  color: #aaa;
+  font-size: 11px;
+  padding: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🛒 Kaimono Assist</h1>
+  <p>毎日のお買い物を、もっと便利に。</p>
+</header>
+
+<nav>
+  <button class="active" onclick="showPage('list',this)">🛒 リスト</button>
+  <button onclick="showPage('products',this)">📦 商品</button>
+  <button onclick="showPage('stores',this)">🏪 お店</button>
+  <button onclick="showPage('settings',this)">⚙ 設定</button>
+</nav>
+
+<main>
+
+<!-- 買い物リスト -->
+<section id="list">
+
+  <h2>今日のお買い物</h2>
+
+  <div class="panel">
+    <h3>よく買うもの</h3>
+    <div id="quickList" class="quick-list"></div>
+  </div>
+
+  <div class="panel">
+    <h3>今回買うもの</h3>
+    <div id="shoppingList"></div>
+  </div>
+
+  <div class="panel">
+    <h3>商品を追加</h3>
+
+    <input id="newItemName" placeholder="商品名を入力">
+
+    <label class="small">優先順位</label>
+    <select id="newItemPriority">
+      <option value="high">高</option>
+      <option value="medium" selected>中</option>
+      <option value="low">低</option>
+    </select>
+
+    <label class="small">購入するお店</label>
+    <select id="newItemStore"></select>
+
+    <button class="primary" onclick="addToList()">
+      ＋ リストに追加
+    </button>
+  </div>
+
+  <div class="panel">
+    <h3>お買い物の整理</h3>
+    <p class="small">
+      未購入の商品は次回のお買い物に引き継げます。
+    </p>
+    <button class="secondary" onclick="carryOver()">
+      未購入品を次回に引き継ぐ
+    </button>
+    <button class="danger" onclick="clearShoppingList()">
+      リストを空にする
+    </button>
+  </div>
+
+</section>
+
+<!-- 商品登録 -->
+<section id="products" class="hidden">
+
+  <h2>商品管理</h2>
+
+  <div class="panel">
+    <h3>商品を登録する</h3>
+
+    <input id="productName" placeholder="商品名">
+
+    <label class="small">カテゴリー</label>
+    <select id="productCategory">
+      <option>食品</option>
+      <option>飲料</option>
+      <option>日用品</option>
+      <option>薬・衛生用品</option>
+      <option>その他</option>
+    </select>
+
+
+    <label class="small">優先順位</label>
+    <select id="productPriority">
+      <option value="high">高</option>
+      <option value="medium">中</option>
+      <option value="low">低</option>
+    </select>
+
+    <label class="small">購入するお店</label>
+    <select id="productStore"></select>
+
+    <label>
+      <input type="checkbox" id="productFavorite"
+        style="width:auto;margin:0 5px 0 0;">
+      よく買うものに登録する
+    </label>
+
+    <button class="primary" onclick="saveProduct()">
+      商品を登録
+    </button>
+  </div>
+
+  <div class="panel">
+    <h3>登録済みの商品</h3>
+    <div id="productList"></div>
+  </div>
+
+</section>
+
+<!-- お店管理 -->
+<section id="stores" class="hidden">
+
+  <h2>お店の管理</h2>
+
+  <div class="panel">
+    <h3>お店を登録する</h3>
+    <div class="row">
+      <input id="newStoreName" placeholder="例：近所のスーパー">
+      <button class="secondary" onclick="addStore()">追加</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>登録済みのお店</h3>
+    <div id="storeList"></div>
+  </div>
+
+</section>
+
+<!-- 設定 -->
+<section id="settings" class="hidden">
+
+  <h2>設定</h2>
+
+  <div class="panel">
+    <h3>データのバックアップ</h3>
+    <p class="small">
+      登録した商品やお店、買い物リストを保存できます。
+    </p>
+    <button class="primary" onclick="exportData()">
+      データを書き出す
+    </button>
+  </div>
+
+  <div class="panel">
+    <h3>データの復元</h3>
+    <input type="file" id="importFile" accept=".json">
+    <button class="secondary" onclick="importData()">
+      バックアップを読み込む
+    </button>
+  </div>
+
+  <div class="panel">
+    <h3>データの初期化</h3>
+    <p class="small">
+      登録したデータをすべて削除します。
+    </p>
+    <button class="danger" onclick="resetData()">
+      すべて初期化
+    </button>
+  </div>
+
+  <div class="panel">
+    <p class="small">
+      Kaimono Assist 第1版<br>
+      データはこのブラウザ内に保存されます。
+    </p>
+  </div>
+
+</section>
+
+</main>
+
+<footer>
+  Kaimono Assist
+</footer>
+
+<script>
+
+// データの読み込み
+function loadData(key, fallback) {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+let products = loadData("ka_products", []);
+
+let stores = loadData("ka_stores", ["近所のスーパー","ドラッグストア"]);
+
+let shopping = loadData("ka_shopping", []);
+
+let editingProductId = null;
+
+// 保存
+function saveData() {
+  localStorage.setItem("ka_products", JSON.stringify(products));
+  localStorage.setItem("ka_stores", JSON.stringify(stores));
+  localStorage.setItem("ka_shopping", JSON.stringify(shopping));
+}
+
+// ページ切り替え
+function showPage(page, button) {
+  document.querySelectorAll("main section").forEach(section => {
+    section.classList.add("hidden");
+  });
+
+  document.getElementById(page).classList.remove("hidden");
+
+  document.querySelectorAll("nav button").forEach(btn => {
+    btn.classList.remove("active");
+  });
+
+  button.classList.add("active");
+
+  renderAll();
+}
+
+// 優先順位表示
+function priorityLabel(priority) {
+  const labels = {
+    high: ["高","high"],
+    medium: ["中","medium"],
+    low: ["低","low"]
+  };
+
+  const item = labels[priority] || labels.medium;
+
+  return `<span class="priority ${item[1]}">${item[0]}</span>`;
+}
+
+// お店の選択肢
+function renderStoreOptions() {
+  ["newItemStore","productStore"].forEach(id => {
+    const select = document.getElementById(id);
+    const current = select.value;
+
+    select.innerHTML = '<option value="">指定なし</option>';
+
+    stores.forEach(store => {
+      const option = document.createElement("option");
+      option.value = store;
+      option.textContent = store;
+      select.appendChild(option);
+    });
+
+    select.value = stores.includes(current) ? current : "";
+  });
+}
+
+// よく買うもの
+function renderQuickList() {
+  const area = document.getElementById("quickList");
+  area.innerHTML = "";
+
+  const favorites = products.filter(p => p.favorite);
+
+  if (favorites.length === 0) {
+    area.innerHTML = '<p class="empty">よく買う商品はありません。</p>';
+    return;
+  }
+
+  favorites.forEach(product => {
+    const button = document.createElement("button");
+   button.textContent = product.name;
+
+    button.onclick = () => addProductToShopping(product.id);
+
+    area.appendChild(button);
+  });
+}
+
+// 買い物リスト
+function renderShoppingList() {
+  const area = document.getElementById("shoppingList");
+  area.innerHTML = "";
+
+  if (shopping.length === 0) {
+    area.innerHTML = '<p class="empty">買い物リストは空です。</p>';
+    return;
+  }
+
+  shopping.forEach(item => {
+    const product = products.find(p => p.id === item.productId);
+
+    const div = document.createElement("div");
+    div.className = "item" + (item.bought ? " bought" : "");
+
+    const check = document.createElement("input");
+    check.type = "checkbox";
+    check.checked = item.bought;
+    check.style.width = "22px";
+    check.style.height = "22px";
+    check.style.margin = "0";
+
+    check.onchange = () => {
+      item.bought = check.checked;
+      saveData();
+      renderShoppingList();
+    };
+
+    const info = document.createElement("div");
+    info.className = "item-info";
+
+    const name = document.createElement("div");
+    name.className = "item-name";
+    name.textContent = item.name;
+
+    const detail = document.createElement("div");
+    detail.className = "item-detail";
+    detail.textContent = item.store ? item.store : "購入先未指定";
+
+    info.appendChild(name);
+    info.appendChild(detail);
+
+    const priority = document.createElement("span");
+    priority.innerHTML = priorityLabel(item.priority);
+
+    const remove = document.createElement("button");
+    remove.className = "danger";
+    remove.textContent = "削除";
+
+    remove.onclick = () => {
+      shopping = shopping.filter(x => x.id !== item.id);
+      saveData();
+      renderShoppingList();
+    };
+
+    div.append(check, info, priority, remove);
+    area.appendChild(div);
+  });
+}
+
+// リストに商品を追加
+function addProductToShopping(productId) {
+  const product = products.find(p => p.id === productId);
+  if (!product) return;
+
+  const exists = shopping.some(item =>
+    item.productId === productId && !item.bought
+  );
+
+  if (exists) {
+    alert("この商品はすでにリストにあります。");
+    return;
+  }
+
+  shopping.push({
+    id: Date.now() + Math.random(),
+    productId: product.id,
+    name: product.name,
+    priority: product.priority,
+    store: product.store,
+    bought: false
+  });
+
+  saveData();
+  renderShoppingList();
+}
+
+// 手動追加
+function addToList() {
+  const name = document.getElementById("newItemName").value.trim();
+
+  if (!name) {
+    alert("商品名を入力してください。");
+    return;
+  }
+
+  const priority = document.getElementById("newItemPriority").value;
+  const store = document.getElementById("newItemStore").value;
+
+  shopping.push({
+    id: Date.now() + Math.random(),
+    productId: null,
+    name,
+    priority,
+    store,
+    bought: false
+  });
+
+  document.getElementById("newItemName").value = "";
+
+  saveData();
+  renderShoppingList();
+}
+
+// 商品登録・編集
+function saveProduct() {
+  const name = document.getElementById("productName").value.trim();
+
+  if (!name) {
+    alert("商品名を入力してください。");
+    return;
+  }
+
+  const data = {
+    name,
+    category: document.getElementById("productCategory").value,
+    priority: document.getElementById("productPriority").value,
+    store: document.getElementById("productStore").value,
+    favorite: document.getElementById("productFavorite").checked
+  };
+
+  if (editingProductId !== null) {
+    const product = products.find(p => p.id === editingProductId);
+    if (product) Object.assign(product, data);
+  } else {
+    products.push({
+      id: Date.now() + Math.random(),
+      ...data
+    });
+  }
+
+  editingProductId = null;
+
+  document.getElementById("productName").value = "";
+  document.getElementById("productFavorite").checked = false;
+
+  saveData();
+  renderAll();
+
+  alert("商品を保存しました。");
+}
+
+// 商品編集
+function editProduct(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+
+  editingProductId = id;
+
+  document.getElementById("productName").value = p.name;
+  document.getElementById("productCategory").value = p.category;
+  document.getElementById("productIcon").value = p.icon;
+  document.getElementById("productPriority").value = p.priority;
+  document.getElementById("productStore").value = p.store;
+  document.getElementById("productFavorite").checked = p.favorite;
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+// 商品削除
+function deleteProduct(id) {
+  if (!confirm("この商品を削除しますか？")) return;
+
+  products = products.filter(p => p.id !== id);
+
+  saveData();
+  renderAll();
+}
+
+// 商品一覧
+function renderProducts() {
+  const area = document.getElementById("productList");
+  area.innerHTML = "";
+
+  if (products.length === 0) {
+    area.innerHTML = '<p class="empty">商品がありません。</p>';
+    return;
+  }
+
+  products.forEach(p => {
+    const div = document.createElement("div");
+    div.className = "product-item";
+
+    const info = document.createElement("span");
+   info.textContent = p.name +
+  " (" + p.category + ")" +
+  (p.favorite ? " ★" : "");
+
+    const edit = document.createElement("button");
+    edit.className = "secondary";
+    edit.textContent = "編集";
+    edit.onclick = () => editProduct(p.id);
+
+    const del = document.createElement("button");
+    del.className = "danger";
+    del.textContent = "削除";
+    del.onclick = () => deleteProduct(p.id);
+
+    div.append(info, edit, del);
+    area.appendChild(div);
+  });
+}
+
+// お店追加
+function addStore() {
+  const name = document.getElementById("newStoreName").value.trim();
+
+  if (!name) {
+    alert("お店の名前を入力してください。");
+    return;
+  }
+
+  if (stores.includes(name)) {
+    alert("このお店は登録済みです。");
+    return;
+  }
+
+  stores.push(name);
+  document.getElementById("newStoreName").value = "";
+
+  saveData();
+  renderAll();
+}
+
+// お店一覧
+function renderStores() {
+  const area = document.getElementById("storeList");
+  area.innerHTML = "";
+
+  if (stores.length === 0) {
+    area.innerHTML = '<p class="empty">お店がありません。</p>';
+    return;
+  }
+
+  stores.forEach(store => {
+    const div = document.createElement("div");
+    div.className = "store-item";
+
+    const name = document.createElement("span");
+    name.textContent = "🏪 " + store;
+
+    const del = document.createElement("button");
+    del.className = "danger";
+    del.textContent = "削除";
+
+    del.onclick = () => {
+      if (!confirm(store + "を削除しますか？")) return;
+
+      stores = stores.filter(s => s !== store);
+      products.forEach(p => {
+        if (p.store === store) p.store = "";
+      });
+      shopping.forEach(item => {
+        if (item.store === store) item.store = "";
+      });
+
+      saveData();
+      renderAll();
+    };
+
+    div.append(name, del);
+    area.appendChild(div);
+  });
+}
+
+// 未購入品の引き継ぎ
+function carryOver() {
+  const remaining = shopping.filter(item => !item.bought);
+
+  if (remaining.length === 0) {
+    alert("未購入の商品はありません。");
+    return;
+  }
+
+  shopping = remaining.map(item => ({
+    ...item,
+    id: Date.now() + Math.random(),
+    bought: false
+  }));
+
+  saveData();
+  renderAll();
+
+  alert("未購入品を次回用に引き継ぎました。");
+}
+
+// リストを空にする
+function clearShoppingList() {
+  if (!confirm("買い物リストをすべて空にしますか？")) return;
+
+  shopping = [];
+  saveData();
+  renderShoppingList();
+}
+
+// データ書き出し
+function exportData() {
+  const data = {
+    products,
+    stores,
+    shopping
+  };
+
+  const blob = new Blob(
+    [JSON.stringify(data, null, 2)],
+    {type:"application/json"}
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = "kaimono_assist_backup.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
+// データ読み込み
+function importData() {
+  const file = document.getElementById("importFile").files[0];
+
+  if (!file) {
+    alert("バックアップファイルを選択してください。");
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+
+      if (
+        !data ||
+        !Array.isArray(data.products) ||
+        !Array.isArray(data.stores) ||
+        !Array.isArray(data.shopping)
+      ) {
+        throw new Error("形式が違います");
+      }
+
+      if (!confirm("現在のデータを上書きして復元しますか？")) return;
+
+      products = data.products;
+      stores = data.stores;
+      shopping = data.shopping;
+
+      saveData();
+      renderAll();
+
+      alert("データを復元しました。");
+    } catch (e) {
+      alert("ファイルを読み込めませんでした。");
+    }
+  };
+
+  reader.readAsText(file);
+}
+
+// 初期化
+function resetData() {
+  if (!confirm("すべてのデータを削除しますか？")) return;
+
+  if (!confirm("本当に初期化しますか？")) return;
+
+  products = [];
+  stores = [];
+  shopping = [];
+
+  saveData();
+  renderAll();
+
+  alert("初期化しました。");
+}
+
+// 画面更新
+function renderAll() {
+  renderStoreOptions();
+  renderQuickList();
+  renderShoppingList();
+  renderProducts();
+  renderStores();
+}
+
+// 起動
+renderAll();
+
+</script>
+
+</body>
+</html>
